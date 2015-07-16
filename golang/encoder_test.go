@@ -41,8 +41,6 @@ func TestTLVObject(t *testing.T) {
 
 	tlvBuilder.build()
 
-	fmt.Printf("buildBytes = %v\n", tlvBuilder.Bytes())
-
 	tlvParser := TLVObject{}
 	tlvParser.FromBytes(tlvBuilder.Bytes())
 

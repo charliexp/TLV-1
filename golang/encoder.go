@@ -29,7 +29,7 @@ const (
 
 // 数据类型
 const (
-	DateTypePrimitive = 0x00 //基本数据编码
+	DataTypePrimitive = 0x00 //基本数据编码
 	DataTypeStruct    = 0x20 //TLV嵌套
 )
 

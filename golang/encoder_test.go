@@ -21,13 +21,89 @@ import (
 	"testing"
 )
 
+func TestTLVObject(t *testing.T) {
+	tlvBuilder := TLVObject{}
+
+	tlvObject := TLVObject{}
+	tlvBuilder.Put(0, &tlvObject)
+
+	var int8Value int8 = 10
+	var int16Value int16 = -300
+	var int32Value int32 = 655354
+	var int64Value int64 = 65535400
+	stringValue := "zhoujunhua"
+
+	tlvObject.PutInt8(0, int8Value)
+	tlvObject.PutInt16(1, int16Value)
+	tlvObject.PutInt32(2, int32Value)
+	tlvObject.PutInt64(3, int64Value)
+	tlvObject.PutString(4, stringValue)
+
+	tlvBuilder.build()
+
+	fmt.Printf("buildBytes = %v\n", tlvBuilder.Bytes())
+
+	tlvParser := TLVObject{}
+	tlvParser.FromBytes(tlvBuilder.Bytes())
+
+	findObject, ok := tlvParser.Get(0)
+	if ok {
+		int8ValueParse, ok := findObject.GetInt8(0)
+		if ok {
+			fmt.Printf("int8ValueParse = %v\n", int8ValueParse)
+		} else {
+			t.Errorf("没有找到int8Field\n")
+		}
+
+		int16ValueParse, ok := findObject.GetInt16(1)
+		if ok {
+			fmt.Printf("int16ValueParse = %v\n", int16ValueParse)
+		} else {
+			t.Errorf("没有找到int16Field\n")
+		}
+
+		int32ValueParse, ok := findObject.GetInt32(2)
+		if ok {
+			fmt.Printf("int32ValueParse = %v\n", int32ValueParse)
+		} else {
+			t.Errorf("没有找到int32Field\n")
+		}
+
+		int64ValueParse, ok := findObject.GetInt64(3)
+		if ok {
+			fmt.Printf("int64ValueParse = %v\n", int64ValueParse)
+		} else {
+			t.Errorf("没有找到int64Field\n")
+		}
+
+		stringParse, ok := findObject.GetString(4)
+		if ok {
+			fmt.Printf("stringParse = %v\n", stringParse)
+		} else {
+			t.Errorf("没有找到stringField\n")
+		}
+
+		if int8ValueParse != int8Value ||
+			int16ValueParse != int16Value ||
+			int32ValueParse != int32Value ||
+			int64ValueParse != int64Value ||
+			strings.EqualFold(stringParse, stringValue) == false {
+			t.Errorf("测试失败\n")
+		}
+
+	} else {
+		t.Errorf("没有找到findObject\n")
+	}
+
+}
+
 func TestTLVPkg(t *testing.T) {
 
 	var int8Value int8 = 10
 	int8ValueBytes := make([]byte, 1)
 	int8ValueBytes[0] = byte(int8Value)
 	int8Field := TLVPkg{
-		DataType: DateTypePrimitive,
+		DataType: DataTypePrimitive,
 		TagValue: 0,
 		Value:    int8ValueBytes,
 	}
@@ -37,7 +113,7 @@ func TestTLVPkg(t *testing.T) {
 	int16ValueBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(int16ValueBytes, uint16(int16Value))
 	int16Field := TLVPkg{
-		DataType: DateTypePrimitive,
+		DataType: DataTypePrimitive,
 		TagValue: 1,
 		Value:    int16ValueBytes,
 	}
@@ -47,7 +123,7 @@ func TestTLVPkg(t *testing.T) {
 	int32ValueBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(int32ValueBytes, uint32(int32Value))
 	int32Field := TLVPkg{
-		DataType: DateTypePrimitive,
+		DataType: DataTypePrimitive,
 		TagValue: 2,
 		Value:    int32ValueBytes,
 	}
@@ -57,7 +133,7 @@ func TestTLVPkg(t *testing.T) {
 	int64ValueBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(int64ValueBytes, uint64(int64Value))
 	int64Field := TLVPkg{
-		DataType: DateTypePrimitive,
+		DataType: DataTypePrimitive,
 		TagValue: 3,
 		Value:    int64ValueBytes,
 	}
@@ -65,7 +141,7 @@ func TestTLVPkg(t *testing.T) {
 
 	stringValue := "zhoujunhua"
 	stringField := TLVPkg{
-		DataType: DateTypePrimitive,
+		DataType: DataTypePrimitive,
 		TagValue: 4,
 		Value:    []byte(stringValue),
 	}
@@ -176,7 +252,7 @@ func TestBuildLength(t *testing.T) {
 */
 func TestBuildTag(t *testing.T) {
 	rawFrameType := []byte{FarmeTypePrimitive, FarmeTypePrivate}
-	rawDataType := []byte{DateTypePrimitive, DataTypeStruct}
+	rawDataType := []byte{DataTypePrimitive, DataTypeStruct}
 	rawTagValue := []int{0x1f, 0x81, 0x3FFF, 0x3FFFF}
 
 	for i := 0; i < len(rawFrameType); i++ {

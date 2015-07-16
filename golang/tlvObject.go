@@ -248,9 +248,11 @@ func (this *TLVObject) GetString(key int) (ret string, ok bool) {
 	return ret, true
 }
 
-func (this *TLVObject) Put(key int, tlvObject TLVObject) error {
+func (this *TLVObject) Put(key int, tlvObject *TLVObject) error {
+	tlvObject.Pkg.FrameType = FarmeTypePrimitive
 	tlvObject.Pkg.DataType = DataTypeStruct
-	this.addNode(&tlvObject)
+	tlvObject.Pkg.TagValue = key
+	this.addNode(tlvObject)
 	return nil
 }
 
@@ -260,10 +262,11 @@ func (this *TLVObject) Put(key int, tlvObject TLVObject) error {
 func (this *TLVObject) addPrimitiveNode(key int, valueBytes []byte) {
 	pkg := TLVPkg{
 		FrameType: FarmeTypePrimitive,
-		DataType:  DateTypePrimitive,
+		DataType:  DataTypePrimitive,
 		TagValue:  key,
 		Value:     valueBytes,
 	}
+	pkg.Build()
 
 	newNode := TLVObject{
 		Pkg: pkg,
@@ -320,18 +323,27 @@ func (this *TLVObject) PutString(key int, value string) error {
 }
 
 func (this *TLVObject) build() {
-	// count := len(rawObject.node)
-	// primitiveCount := 0
-	// for i := 0; i < ; i++ {
-	// 	tagValue := rawObject.node[i].Pkg.TagValue
-	// 	if tagValue == key {
-	// 		retObject = rawObject.node[i]
-	// 		ok = true
-	// 		break
-	// 	}
-	// }
+	this.Pkg.Value = buildNode(this.node)
 }
 
+/**
+构建TLV嵌套结构的节点数据
+*/
+func buildNode(node []*TLVObject) (nodeBytes []byte) {
+	for i := 0; i < len(node); i++ {
+		if node[i].Pkg.DataType == DataTypeStruct {
+			node[i].Pkg.Value = buildNode(node[i].node)
+			node[i].Pkg.Build()
+		}
+		nodeBytes = append(nodeBytes, node[i].Pkg.Bytes()...)
+	}
+
+	return nodeBytes
+}
+
+/**
+获取TLV的字节数据
+*/
 func (this *TLVObject) Bytes() []byte {
-	return nil
+	return this.Pkg.Value
 }

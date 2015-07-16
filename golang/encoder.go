@@ -23,14 +23,14 @@ import (
 
 // 帧类型
 const (
-	FRAME_TYPE_PRIMITVIE = 0x00 //基本类型
-	FRAME_TYPE_PRIVATE   = 0x40 //私有类型
+	FarmeTypePrimitvie = 0x00 //基本类型
+	FarmeTypePrivate   = 0x40 //私有类型
 )
 
 // 数据类型
 const (
-	DATA_TYPE_PRIMITVIE = 0x00 //基本数据编码
-	DATA_TYPE_STRUCT    = 0x20 //TLV嵌套
+	DateTypePrimitvie = 0x00 //基本数据编码
+	DataTypeStruct    = 0x20 //TLV嵌套
 )
 
 type TLVPkg struct {
@@ -55,6 +55,8 @@ func (this *TLVPkg) Build() {
 	tagBytes := buildTag(this.FrameType, this.DataType, this.TagValue)
 	lenBytes := buildLength(this.dataByteCount)
 
+	//fmt.Printf("dataByteCount = %v, lenBytes = %v\n", this.dataByteCount, lenBytes)
+
 	this.tagByteCount = len(tagBytes)
 	this.lenByteCount = len(lenBytes)
 
@@ -73,7 +75,7 @@ func (this *TLVPkg) Size() int {
 /**
 获取TLV数据包的字节数据
 */
-func (this *TLVPkg) getBytes() []byte {
+func (this *TLVPkg) Bytes() []byte {
 	return this.data
 }
 

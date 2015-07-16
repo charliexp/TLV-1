@@ -15,40 +15,75 @@
 package golang
 
 import (
-	// "bytes"
-	// "encoding/binary"
+	"encoding/binary"
 	"fmt"
+	"strings"
 	"testing"
 )
 
 func TestTLVPkg(t *testing.T) {
 
-	command := TLVPkg{
-		DataType: DATA_TYPE_PRIMITVIE,
+	var int8Value int8 = 10
+	int8ValueBytes := make([]byte, 1)
+	int8ValueBytes[0] = byte(int8Value)
+	int8Field := TLVPkg{
+		DataType: DateTypePrimitvie,
 		TagValue: 0,
-		Value:    []byte{10},
+		Value:    int8ValueBytes,
 	}
-	command.Build()
+	int8Field.Build()
 
-	sid := TLVPkg{
-		DataType: DATA_TYPE_PRIMITVIE,
-		TagValue: 2,
-		Value:    []byte{20},
+	var int16Value int16 = -300
+	int16ValueBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(int16ValueBytes, uint16(int16Value))
+	int16Field := TLVPkg{
+		DataType: DateTypePrimitvie,
+		TagValue: 1,
+		Value:    int16ValueBytes,
 	}
-	sid.Build()
+	int16Field.Build()
+
+	var int32Value int32 = 655354
+	int32ValueBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(int32ValueBytes, uint32(int32Value))
+	int32Field := TLVPkg{
+		DataType: DateTypePrimitvie,
+		TagValue: 2,
+		Value:    int32ValueBytes,
+	}
+	int32Field.Build()
+
+	var int64Value int64 = 65535400
+	int64ValueBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(int64ValueBytes, uint64(int64Value))
+	int64Field := TLVPkg{
+		DataType: DateTypePrimitvie,
+		TagValue: 3,
+		Value:    int64ValueBytes,
+	}
+	int64Field.Build()
+
+	stringValue := "zhoujunhua"
+	stringField := TLVPkg{
+		DataType: DateTypePrimitvie,
+		TagValue: 4,
+		Value:    []byte(stringValue),
+	}
+	stringField.Build()
 
 	var rootValue []byte
-	rootValue = append(rootValue, command.getBytes()...)
-	rootValue = append(rootValue, sid.getBytes()...)
+	rootValue = append(rootValue, int8Field.Bytes()...)
+	rootValue = append(rootValue, int16Field.Bytes()...)
+	rootValue = append(rootValue, int32Field.Bytes()...)
+	rootValue = append(rootValue, int64Field.Bytes()...)
+	rootValue = append(rootValue, stringField.Bytes()...)
 	rootPkg := TLVPkg{
-		DataType: DATA_TYPE_STRUCT,
-		TagValue: 3,
+		DataType: DataTypeStruct,
+		TagValue: 0,
 		Value:    rootValue,
 	}
 	rootPkg.Build()
-	tlvBytes := rootPkg.getBytes()
-
-	//fmt.Printf("tlvBytes = %v\n", tlvBytes)
+	tlvBytes := rootPkg.Bytes()
 
 	//数据序列化完成，进行反序列化
 	tlvObject := TLVObject{}
@@ -68,6 +103,55 @@ func TestTLVPkg(t *testing.T) {
 	streamDecoder.Parse(mutiTLVBytes[5:6], len(mutiTLVBytes[5:6]))
 	streamDecoder.Parse(mutiTLVBytes[6:10], len(mutiTLVBytes[6:10]))
 	streamDecoder.Parse(mutiTLVBytes[10:], len(mutiTLVBytes[10:]))
+
+	findObject, ok := tlvObject.Get(0)
+	if ok {
+		int8ValueParse, ok := findObject.GetInt8(0)
+		if ok {
+			fmt.Printf("int8ValueParse = %v\n", int8ValueParse)
+		} else {
+			t.Errorf("没有找到int8Field\n")
+		}
+
+		int16ValueParse, ok := findObject.GetInt16(1)
+		if ok {
+			fmt.Printf("int16ValueParse = %v\n", int16ValueParse)
+		} else {
+			t.Errorf("没有找到int16Field\n")
+		}
+
+		int32ValueParse, ok := findObject.GetInt32(2)
+		if ok {
+			fmt.Printf("int32ValueParse = %v\n", int32ValueParse)
+		} else {
+			t.Errorf("没有找到int32Field\n")
+		}
+
+		int64ValueParse, ok := findObject.GetInt64(3)
+		if ok {
+			fmt.Printf("int64ValueParse = %v\n", int64ValueParse)
+		} else {
+			t.Errorf("没有找到int64Field\n")
+		}
+
+		stringParse, ok := findObject.GetString(4)
+		if ok {
+			fmt.Printf("stringParse = %v\n", stringParse)
+		} else {
+			t.Errorf("没有找到stringField\n")
+		}
+
+		if int8ValueParse != int8Value ||
+			int16ValueParse != int16Value ||
+			int32ValueParse != int32Value ||
+			int64ValueParse != int64Value ||
+			strings.EqualFold(stringParse, stringValue) == false {
+			t.Errorf("测试失败\n")
+		}
+
+	} else {
+		t.Errorf("没有找到findObject\n")
+	}
 }
 
 /**
@@ -91,8 +175,8 @@ func TestBuildLength(t *testing.T) {
 测试类型编码和解码是否正确
 */
 func TestBuildTag(t *testing.T) {
-	rawFrameType := []byte{FRAME_TYPE_PRIMITVIE, FRAME_TYPE_PRIVATE}
-	rawDataType := []byte{DATA_TYPE_PRIMITVIE, DATA_TYPE_STRUCT}
+	rawFrameType := []byte{FarmeTypePrimitvie, FarmeTypePrivate}
+	rawDataType := []byte{DateTypePrimitvie, DataTypeStruct}
 	rawTagValue := []int{0x1f, 0x81, 0x3FFF, 0x3FFFF}
 
 	for i := 0; i < len(rawFrameType); i++ {

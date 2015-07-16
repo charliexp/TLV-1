@@ -144,8 +144,8 @@ func findLenByteCount(tlvBytes []byte, lenStartPos int) (lenByteCount int) {
 解析数据类型
 */
 func parseTag(tagBytes []byte) (frameType byte, dataType byte, tagValue int) {
-	frameType = tagBytes[0] & FRAME_TYPE_PRIVATE
-	dataType = tagBytes[0] & DATA_TYPE_STRUCT
+	frameType = tagBytes[0] & FarmeTypePrivate
+	dataType = tagBytes[0] & DataTypeStruct
 
 	tempByte := tagBytes[0] //临时保存，计算完成tagValue恢复
 

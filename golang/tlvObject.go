@@ -257,10 +257,10 @@ func (this *TLVObject) Put(key int, tlvObject TLVObject) error {
 /**
 添加基本数据节点
 */
-func (this *TLVObject) addPrimitvieNode(key int, valueBytes []byte) {
+func (this *TLVObject) addPrimitiveNode(key int, valueBytes []byte) {
 	pkg := TLVPkg{
-		FrameType: FarmeTypePrimitvie,
-		DataType:  DateTypePrimitvie,
+		FrameType: FarmeTypePrimitive,
+		DataType:  DateTypePrimitive,
 		TagValue:  key,
 		Value:     valueBytes,
 	}
@@ -277,14 +277,14 @@ func (this *TLVObject) PutBool(key int, value bool) error {
 		valueBytes[0] = 1
 	}
 
-	this.addPrimitvieNode(key, valueBytes)
+	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
 func (this *TLVObject) PutInt8(key int, value int8) error {
 	valueBytes := []byte{byte(value)}
 
-	this.addPrimitvieNode(key, valueBytes)
+	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
@@ -292,7 +292,7 @@ func (this *TLVObject) PutInt16(key int, value int16) error {
 	valueBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(valueBytes, uint16(value))
 
-	this.addPrimitvieNode(key, valueBytes)
+	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
@@ -300,7 +300,7 @@ func (this *TLVObject) PutInt32(key int, value int32) error {
 	valueBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(valueBytes, uint32(value))
 
-	this.addPrimitvieNode(key, valueBytes)
+	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
@@ -308,19 +308,28 @@ func (this *TLVObject) PutInt64(key int, value int64) error {
 	valueBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(valueBytes, uint64(value))
 
-	this.addPrimitvieNode(key, valueBytes)
+	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
 func (this *TLVObject) PutString(key int, value string) error {
 	valueBytes := []byte(value)
 
-	this.addPrimitvieNode(key, valueBytes)
+	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
 func (this *TLVObject) build() {
-
+	// count := len(rawObject.node)
+	// primitiveCount := 0
+	// for i := 0; i < ; i++ {
+	// 	tagValue := rawObject.node[i].Pkg.TagValue
+	// 	if tagValue == key {
+	// 		retObject = rawObject.node[i]
+	// 		ok = true
+	// 		break
+	// 	}
+	// }
 }
 
 func (this *TLVObject) Bytes() []byte {

@@ -23,13 +23,13 @@ import (
 
 // 帧类型
 const (
-	FarmeTypePrimitvie = 0x00 //基本类型
+	FarmeTypePrimitive = 0x00 //基本类型
 	FarmeTypePrivate   = 0x40 //私有类型
 )
 
 // 数据类型
 const (
-	DateTypePrimitvie = 0x00 //基本数据编码
+	DateTypePrimitive = 0x00 //基本数据编码
 	DataTypeStruct    = 0x20 //TLV嵌套
 )
 

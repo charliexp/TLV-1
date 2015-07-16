@@ -27,7 +27,7 @@ func TestTLVPkg(t *testing.T) {
 	int8ValueBytes := make([]byte, 1)
 	int8ValueBytes[0] = byte(int8Value)
 	int8Field := TLVPkg{
-		DataType: DateTypePrimitvie,
+		DataType: DateTypePrimitive,
 		TagValue: 0,
 		Value:    int8ValueBytes,
 	}
@@ -37,7 +37,7 @@ func TestTLVPkg(t *testing.T) {
 	int16ValueBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(int16ValueBytes, uint16(int16Value))
 	int16Field := TLVPkg{
-		DataType: DateTypePrimitvie,
+		DataType: DateTypePrimitive,
 		TagValue: 1,
 		Value:    int16ValueBytes,
 	}
@@ -47,7 +47,7 @@ func TestTLVPkg(t *testing.T) {
 	int32ValueBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(int32ValueBytes, uint32(int32Value))
 	int32Field := TLVPkg{
-		DataType: DateTypePrimitvie,
+		DataType: DateTypePrimitive,
 		TagValue: 2,
 		Value:    int32ValueBytes,
 	}
@@ -57,7 +57,7 @@ func TestTLVPkg(t *testing.T) {
 	int64ValueBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(int64ValueBytes, uint64(int64Value))
 	int64Field := TLVPkg{
-		DataType: DateTypePrimitvie,
+		DataType: DateTypePrimitive,
 		TagValue: 3,
 		Value:    int64ValueBytes,
 	}
@@ -65,7 +65,7 @@ func TestTLVPkg(t *testing.T) {
 
 	stringValue := "zhoujunhua"
 	stringField := TLVPkg{
-		DataType: DateTypePrimitvie,
+		DataType: DateTypePrimitive,
 		TagValue: 4,
 		Value:    []byte(stringValue),
 	}
@@ -175,8 +175,8 @@ func TestBuildLength(t *testing.T) {
 测试类型编码和解码是否正确
 */
 func TestBuildTag(t *testing.T) {
-	rawFrameType := []byte{FarmeTypePrimitvie, FarmeTypePrivate}
-	rawDataType := []byte{DateTypePrimitvie, DataTypeStruct}
+	rawFrameType := []byte{FarmeTypePrimitive, FarmeTypePrivate}
+	rawDataType := []byte{DateTypePrimitive, DataTypeStruct}
 	rawTagValue := []int{0x1f, 0x81, 0x3FFF, 0x3FFFF}
 
 	for i := 0; i < len(rawFrameType); i++ {

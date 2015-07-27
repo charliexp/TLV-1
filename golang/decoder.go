@@ -12,19 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
-实现TLV数据的解码功能
-*/
+// 实现TLV数据的解码功能
 package golang
 
 import (
-	"fmt"
+//"fmt"
 )
 
-/**
-TLV网络数据解码器
-*/
-type StreamDecoder struct {
+// TLV网络数据解码器
+type Decoder struct {
 	buf    []byte //缓冲区
 	bufLen int    //缓冲区数据长度
 
@@ -35,18 +31,12 @@ type StreamDecoder struct {
 	isFindLen bool
 
 	valueLen int //数据段的长度
-
-	callBack TLVCallBack
-}
-
-type TLVCallBack interface {
-	onFinish(tlvObject *TLVObject) (err error)
 }
 
 /**
 从网络流数据中解析出TLV结构数据
 */
-func (this *StreamDecoder) Parse(request []byte, requestLen int) (err error) {
+func (this *Decoder) Parse(request []byte, requestLen int) (tlvArray []TLVObject, err error) {
 	this.buf = append(this.buf, request[:requestLen]...)
 	this.bufLen += requestLen
 
@@ -84,23 +74,20 @@ func (this *StreamDecoder) Parse(request []byte, requestLen int) (err error) {
 
 			tlvObject := TLVObject{}
 			tlvObject.FromBytes(this.buf[:this.curCursor+1])
-			fmt.Printf("%v\n", tlvObject)
+			//fmt.Printf("%v\n", tlvObject)
 
-			if this.callBack != nil {
-				this.callBack.onFinish(&tlvObject)
-			}
-
+			tlvArray = append(tlvArray, tlvObject)
 			this.reset()
 		}
 	}
 
-	return nil
+	return tlvArray, nil
 }
 
 /**
 解析完一个TLV结构后，重置解码器
 */
-func (this *StreamDecoder) reset() {
+func (this *Decoder) reset() {
 	//遗弃已经解析完的数据包
 	this.buf = this.buf[this.curCursor+1:]
 	this.bufLen = this.bufLen - this.curCursor - 1

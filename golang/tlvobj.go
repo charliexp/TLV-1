@@ -16,21 +16,22 @@ package golang
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 )
 
-/**
-TLV构建对象
-*/
+var (
+	ErrInvalidParam = errors.New("输入参数非法")
+)
+
+// TLV构建对象
 type TLVObject struct {
 	Pkg TLVPkg
 
 	node []*TLVObject //该tlv结构下的数据
 }
 
-/**
-添加一个TLV对象
-*/
+// 添加一个TLV对象
 func (this *TLVObject) addNode(node *TLVObject) {
 	this.node = append(this.node, node)
 }
@@ -39,9 +40,7 @@ func (this TLVObject) String() (ret string) {
 	return traversalField(this.node)
 }
 
-/**
-递归遍历节点数据
-*/
+// 递归遍历节点数据
 func traversalField(node []*TLVObject) (ret string) {
 	for i := 0; i < len(node); i++ {
 		ret += fmt.Sprintf("%v", node[i].Pkg)
@@ -51,23 +50,19 @@ func traversalField(node []*TLVObject) (ret string) {
 	return ret
 }
 
-/**
-通过二进制字节，得到TLV对象
-*/
+// 通过二进制字节，得到TLV对象
 func (this *TLVObject) FromBytes(tlvBytes []byte) {
 	parseTLVPkg(this, tlvBytes)
 }
 
-/**
-解析出TLV对象
-*/
+// 解析出TLV对象
 func parseTLVPkg(node *TLVObject, tlvBytes []byte) {
 
 	tagByteCount := findTagByteCount(tlvBytes)
 	lenByteCount := findLenByteCount(tlvBytes, tagByteCount)
 	length := parseLength(tlvBytes[tagByteCount : tagByteCount+lenByteCount])
 
-	fmt.Printf("tagByteCount = %v, lenByteCount = %v, length = %v\n", tagByteCount, lenByteCount, length)
+	//fmt.Printf("tagByteCount = %v, lenByteCount = %v, length = %v\n", tagByteCount, lenByteCount, length)
 
 	var value []byte
 	frameType, dataType, tagValue := parseTag(tlvBytes[:tagByteCount])
@@ -126,17 +121,17 @@ func findTLVObject(rawObject *TLVObject, key int) (retObject *TLVObject, ok bool
 	return retObject, ok
 }
 
-/**
-获取TLVObject下的一个TLVObject
-*/
+// 获取TLVObject的key
+func (this *TLVObject) GetKey() int {
+	return this.node[0].Pkg.TagValue
+}
+
+// 获取TLVObject下的一个TLVObject
 func (this *TLVObject) Get(key int) (tlvObject *TLVObject, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	return findObject, ok
 }
 
-/**
-获取一个
-*/
 func (this *TLVObject) GetBool(key int) (ret bool, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
@@ -191,9 +186,7 @@ func (this *TLVObject) GetUint8(key int) (ret uint8, ok bool) {
 	return uint8(value[0]), true
 }
 
-/**
-获取指定位数
-*/
+// 获取指定位数
 func (this *TLVObject) getIntWithDigit(key int, digit int) (ret int64, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
@@ -252,6 +245,16 @@ func (this *TLVObject) GetUint64(key int) (uint64, bool) {
 	return uint64(ret), ok
 }
 
+func (this *TLVObject) GetBytes(key int) ([]byte, bool) {
+	findObject, ok := findTLVObject(this, key)
+	if ok == false {
+		fmt.Errorf("不存在该字段, key:%v\n", key)
+		return nil, false
+	}
+
+	return findObject.Pkg.Value, true
+}
+
 func (this *TLVObject) GetString(key int) (ret string, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
@@ -270,9 +273,7 @@ func (this *TLVObject) Put(key int, tlvObject *TLVObject) error {
 	return nil
 }
 
-/**
-添加基本数据节点
-*/
+// 添加基本数据节点
 func (this *TLVObject) addPrimitiveNode(key int, valueBytes []byte) {
 	pkg := TLVPkg{
 		FrameType: FarmeTypePrimitive,
@@ -299,6 +300,10 @@ func (this *TLVObject) PutBool(key int, value bool) error {
 }
 
 func (this *TLVObject) PutInt8(key int, value int8) error {
+	return this.PutUint8(key, uint8(value))
+}
+
+func (this *TLVObject) PutUint8(key int, value uint8) error {
 	valueBytes := []byte{byte(value)}
 
 	this.addPrimitiveNode(key, valueBytes)
@@ -306,43 +311,57 @@ func (this *TLVObject) PutInt8(key int, value int8) error {
 }
 
 func (this *TLVObject) PutInt16(key int, value int16) error {
+	return this.PutUint16(key, uint16(value))
+}
+
+func (this *TLVObject) PutUint16(key int, value uint16) error {
 	valueBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(valueBytes, uint16(value))
+	binary.BigEndian.PutUint16(valueBytes, value)
 
 	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
 func (this *TLVObject) PutInt32(key int, value int32) error {
+	return this.PutUint32(key, uint32(value))
+}
+
+func (this *TLVObject) PutUint32(key int, value uint32) error {
 	valueBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(valueBytes, uint32(value))
+	binary.BigEndian.PutUint32(valueBytes, value)
 
 	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
 func (this *TLVObject) PutInt64(key int, value int64) error {
+	return this.PutUint64(key, uint64(value))
+}
+
+func (this *TLVObject) PutUint64(key int, value uint64) error {
 	valueBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(valueBytes, uint64(value))
+	binary.BigEndian.PutUint64(valueBytes, value)
 
 	this.addPrimitiveNode(key, valueBytes)
+	return nil
+}
+
+func (this *TLVObject) PutBytes(key int, value []byte) error {
+	this.addPrimitiveNode(key, value)
 	return nil
 }
 
 func (this *TLVObject) PutString(key int, value string) error {
-	valueBytes := []byte(value)
+	if value == "" {
+		return ErrInvalidParam
+	}
 
+	valueBytes := []byte(value)
 	this.addPrimitiveNode(key, valueBytes)
 	return nil
 }
 
-func (this *TLVObject) build() {
-	this.Pkg.Value = buildNode(this.node)
-}
-
-/**
-构建TLV嵌套结构的节点数据
-*/
+// 构建TLV嵌套结构的节点数据
 func buildNode(node []*TLVObject) (nodeBytes []byte) {
 	for i := 0; i < len(node); i++ {
 		if node[i].Pkg.DataType == DataTypeStruct {
@@ -355,9 +374,10 @@ func buildNode(node []*TLVObject) (nodeBytes []byte) {
 	return nodeBytes
 }
 
-/**
-获取TLV的字节数据
-*/
+// 获取TLV的字节数据
 func (this *TLVObject) Bytes() []byte {
+	if this.Pkg.Value == nil {
+		this.Pkg.Value = buildNode(this.node)
+	}
 	return this.Pkg.Value
 }

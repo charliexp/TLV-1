@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
-实现TLV编码功能
-*/
+// 实现TLV编码功能
 package golang
 
 import (
@@ -46,9 +44,7 @@ type TLVPkg struct {
 	data []byte //数据包字节数据
 }
 
-/**
-构建tlv对象数据
-*/
+// 构建tlv对象数据
 func (this *TLVPkg) Build() {
 	this.dataByteCount = len(this.Value)
 
@@ -65,9 +61,7 @@ func (this *TLVPkg) Build() {
 	this.data = append(this.data, this.Value...)
 }
 
-/**
-获取TLV数据包大小
-*/
+// 获取TLV数据包大小
 func (this *TLVPkg) Size() int {
 	return this.tagByteCount + this.lenByteCount + this.dataByteCount
 }

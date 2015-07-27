@@ -17,11 +17,11 @@ package golang
 import (
 	"encoding/binary"
 	"fmt"
-	"strings"
 	"testing"
 )
 
 func TestTLVObject(t *testing.T) {
+
 	tlvBuilder := TLVObject{}
 
 	tlvObject := TLVObject{}
@@ -38,8 +38,6 @@ func TestTLVObject(t *testing.T) {
 	tlvObject.PutInt32(2, int32Value)
 	tlvObject.PutInt64(3, int64Value)
 	tlvObject.PutString(4, stringValue)
-
-	tlvBuilder.build()
 
 	tlvParser := TLVObject{}
 	tlvParser.FromBytes(tlvBuilder.Bytes())
@@ -85,7 +83,7 @@ func TestTLVObject(t *testing.T) {
 			int16ValueParse != int16Value ||
 			int32ValueParse != int32Value ||
 			int64ValueParse != int64Value ||
-			strings.EqualFold(stringParse, stringValue) == false {
+			stringParse != stringValue {
 			t.Errorf("测试失败\n")
 		}
 
@@ -172,11 +170,27 @@ func TestTLVPkg(t *testing.T) {
 	mutiTLVBytes = append(mutiTLVBytes, tlvBytes...)
 	mutiTLVBytes = append(mutiTLVBytes, tlvBytes...)
 
-	streamDecoder := StreamDecoder{}
-	streamDecoder.Parse(mutiTLVBytes[:5], len(mutiTLVBytes[:5]))
-	streamDecoder.Parse(mutiTLVBytes[5:6], len(mutiTLVBytes[5:6]))
-	streamDecoder.Parse(mutiTLVBytes[6:10], len(mutiTLVBytes[6:10]))
-	streamDecoder.Parse(mutiTLVBytes[10:], len(mutiTLVBytes[10:]))
+	var tlvArray []TLVObject
+	decoder := Decoder{}
+	tlvArray, _ = decoder.Parse(mutiTLVBytes[:5], len(mutiTLVBytes[:5]))
+	for i, v := range tlvArray {
+		fmt.Printf("tlvArrag[%d]:%v\n", i, v)
+	}
+
+	tlvArray, _ = decoder.Parse(mutiTLVBytes[5:6], len(mutiTLVBytes[5:6]))
+	for i, v := range tlvArray {
+		fmt.Printf("tlvArrag[%d]:%v\n", i, v)
+	}
+
+	tlvArray, _ = decoder.Parse(mutiTLVBytes[6:10], len(mutiTLVBytes[6:10]))
+	for i, v := range tlvArray {
+		fmt.Printf("tlvArrag[%d]:%v\n", i, v)
+	}
+
+	tlvArray, _ = decoder.Parse(mutiTLVBytes[10:], len(mutiTLVBytes[10:]))
+	for i, v := range tlvArray {
+		fmt.Printf("tlvArrag[%d]:%v\n", i, v)
+	}
 
 	findObject, ok := tlvObject.Get(0)
 	if ok {
@@ -219,7 +233,7 @@ func TestTLVPkg(t *testing.T) {
 			int16ValueParse != int16Value ||
 			int32ValueParse != int32Value ||
 			int64ValueParse != int64Value ||
-			strings.EqualFold(stringParse, stringValue) == false {
+			stringParse != stringValue {
 			t.Errorf("测试失败\n")
 		}
 

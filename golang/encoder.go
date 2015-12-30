@@ -70,6 +70,9 @@ func (this *TLVPkg) Size() int {
 获取TLV数据包的字节数据
 */
 func (this *TLVPkg) Bytes() []byte {
+	if this.data == nil {
+		this.Build()
+	}
 	return this.data
 }
 
@@ -84,9 +87,8 @@ func (this TLVPkg) String() (ret string) {
 func buildTag(frameType byte, dataType byte, tagValue int) (tagBytes []byte) {
 
 	tagValueBytes := buildLength(tagValue)
-	count := len(tagValueBytes)
 
-	if tagValueBytes[count-1] > 0x1f {
+	if tagValue > 0x1f {
 		tagBytes = append(tagBytes, 0x80)
 	}
 	tagBytes = append(tagBytes, tagValueBytes...)

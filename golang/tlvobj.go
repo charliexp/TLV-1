@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 )
 
 var (
@@ -88,6 +89,11 @@ func parseTLVPkg(node *TLVObject, tlvBytes []byte) {
 		offset := 0
 
 		for {
+			if remainLen <= 0 {
+				//fmt.Printf("exit, remainLen = %v\n", remainLen)
+				break
+			}
+
 			tagByteCount := findTagByteCount(tlvBytes[offset:])
 			lenByteCount := findLenByteCount(tlvBytes[offset:], tagByteCount)
 			length := parseLength(tlvBytes[offset+tagByteCount : offset+tagByteCount+lenByteCount])
@@ -100,9 +106,6 @@ func parseTLVPkg(node *TLVObject, tlvBytes []byte) {
 
 			offset += consumeLen
 			remainLen -= consumeLen
-			if remainLen <= 0 {
-				break
-			}
 		}
 
 	}
@@ -135,13 +138,13 @@ func (this *TLVObject) Get(key int) (tlvObject *TLVObject, ok bool) {
 func (this *TLVObject) GetBool(key int) (ret bool, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
-		fmt.Errorf("不存在该字段, key:%v\n", key)
+		//fmt.Printf("don't exist this field, key:%v\n", key)
 		return false, false
 	}
 
 	value := findObject.Pkg.Value
 	if len(value) != 1 {
-		fmt.Errorf("该字段不是bool类型, key:%v, value:%v\n", key, value)
+		fmt.Printf("该字段不是bool类型, key:%v, value:%v\n", key, value)
 		return false, false
 	}
 
@@ -157,13 +160,13 @@ func (this *TLVObject) GetBool(key int) (ret bool, ok bool) {
 func (this *TLVObject) GetInt8(key int) (ret int8, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
-		fmt.Errorf("不存在该字段, key:%v\n", key)
+		//fmt.Printf("don't exist this field, key:%v\n", key)
 		return 0, false
 	}
 
 	value := findObject.Pkg.Value
 	if len(value) != 1 {
-		fmt.Errorf("该字段不是int8类型, key:%v, value:%v\n", key, value)
+		fmt.Printf("该字段不是int8类型, key:%v, value:%v\n", key, value)
 		return 0, false
 	}
 
@@ -173,13 +176,13 @@ func (this *TLVObject) GetInt8(key int) (ret int8, ok bool) {
 func (this *TLVObject) GetUint8(key int) (ret uint8, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
-		fmt.Errorf("不存在该字段, key:%v\n", key)
+		//fmt.Printf("don't exist this field, key:%v\n", key)
 		return 0, false
 	}
 
 	value := findObject.Pkg.Value
 	if len(value) != 1 {
-		fmt.Errorf("该字段不是int8类型, key:%v, value:%v\n", key, value)
+		fmt.Printf("该字段不是int8类型, key:%v, value:%v\n", key, value)
 		return 0, false
 	}
 
@@ -190,13 +193,13 @@ func (this *TLVObject) GetUint8(key int) (ret uint8, ok bool) {
 func (this *TLVObject) getIntWithDigit(key int, digit int) (ret int64, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
-		fmt.Errorf("不存在该字段, key:%v\n", key)
+		//fmt.Printf("don't exist this field, key:%v\n", key)
 		return 0, false
 	}
 
 	value := findObject.Pkg.Value
 	if len(value) != digit {
-		fmt.Errorf("该字段不是int8类型, key:%v, value:%v\n", key, value)
+		fmt.Printf("该字段不是int8类型, key:%v, value:%v\n", key, value)
 		return 0, false
 	}
 
@@ -209,7 +212,7 @@ func (this *TLVObject) getIntWithDigit(key int, digit int) (ret int64, ok bool) 
 		ret = int64(binary.BigEndian.Uint64(value))
 	default:
 		ok = false
-		fmt.Errorf("digit不合法, digit:%v\n", digit)
+		fmt.Printf("int number of bytes invalid: %v\n", digit)
 	}
 
 	return ret, ok
@@ -245,10 +248,64 @@ func (this *TLVObject) GetUint64(key int) (uint64, bool) {
 	return uint64(ret), ok
 }
 
+func (this *TLVObject) GetVarUint(key int) (ret uint64, ok bool) {
+	findObject, ok := findTLVObject(this, key)
+	if ok == false {
+		//fmt.Printf("don't exist this field, key:%v\n", key)
+		return 0, false
+	}
+
+	value := findObject.Pkg.Value
+	digit := len(value)
+
+	switch digit {
+	case 1:
+		ret = uint64(value[0])
+	case 2:
+		ret = uint64(binary.BigEndian.Uint16(value))
+	case 4:
+		ret = uint64(binary.BigEndian.Uint32(value))
+	case 8:
+		ret = uint64(binary.BigEndian.Uint64(value))
+	default:
+		ok = false
+		fmt.Printf("int number of bytes invalid: %v\n", digit)
+	}
+
+	return ret, ok
+}
+
+func (this *TLVObject) GetVarInt(key int) (ret int64, ok bool) {
+	findObject, ok := findTLVObject(this, key)
+	if ok == false {
+		//fmt.Printf("don't exist this field, key:%v\n", key)
+		return 0, false
+	}
+
+	value := findObject.Pkg.Value
+	digit := len(value)
+
+	switch digit {
+	case 1:
+		ret = int64(value[0])
+	case 2:
+		ret = int64(binary.BigEndian.Uint16(value))
+	case 4:
+		ret = int64(binary.BigEndian.Uint32(value))
+	case 8:
+		ret = int64(binary.BigEndian.Uint64(value))
+	default:
+		ok = false
+		fmt.Printf("int number of bytes invalid: %v\n", digit)
+	}
+
+	return ret, ok
+}
+
 func (this *TLVObject) GetBytes(key int) ([]byte, bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
-		fmt.Errorf("不存在该字段, key:%v\n", key)
+		//fmt.Printf("don't exist this field, key:%v\n", key)
 		return nil, false
 	}
 
@@ -258,7 +315,7 @@ func (this *TLVObject) GetBytes(key int) ([]byte, bool) {
 func (this *TLVObject) GetString(key int) (ret string, ok bool) {
 	findObject, ok := findTLVObject(this, key)
 	if ok == false {
-		fmt.Errorf("不存在该字段, key:%v\n", key)
+		//fmt.Printf("don't exist this field, key:%v\n", key)
 		return "", false
 	}
 	ret = string(findObject.Pkg.Value)
@@ -338,6 +395,36 @@ func (this *TLVObject) PutInt64(key int, value int64) error {
 	return this.PutUint64(key, uint64(value))
 }
 
+// 写入任意长度的整形数据
+// 范围为int8到int64之间，根据数值大小，自动计算
+func (this *TLVObject) PutVarInt(key int, value int64) (err error) {
+	if value >= math.MinInt8 && value <= math.MaxInt8 {
+		err = this.PutInt8(key, int8(value))
+	} else if value >= math.MinInt16 && value <= math.MaxInt16 {
+		err = this.PutInt16(key, int16(value))
+	} else if value >= math.MinInt32 && value <= math.MaxInt32 {
+		err = this.PutInt32(key, int32(value))
+	} else {
+		err = this.PutInt64(key, int64(value))
+	}
+
+	return err
+}
+
+func (this *TLVObject) PutVarUint(key int, value uint64) (err error) {
+	if value >= 0 && value <= math.MaxUint8 {
+		err = this.PutUint8(key, uint8(value))
+	} else if value > math.MaxUint8 && value <= math.MaxUint16 {
+		err = this.PutUint16(key, uint16(value))
+	} else if value > math.MaxUint16 && value <= math.MaxUint32 {
+		err = this.PutUint32(key, uint32(value))
+	} else {
+		err = this.PutUint64(key, uint64(value))
+	}
+
+	return err
+}
+
 func (this *TLVObject) PutUint64(key int, value uint64) error {
 	valueBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(valueBytes, value)
@@ -363,12 +450,15 @@ func (this *TLVObject) PutString(key int, value string) error {
 
 // 构建TLV嵌套结构的节点数据
 func buildNode(node []*TLVObject) (nodeBytes []byte) {
+	//fmt.Printf("node count:%v\n", len(node))
 	for i := 0; i < len(node); i++ {
 		if node[i].Pkg.DataType == DataTypeStruct {
 			node[i].Pkg.Value = buildNode(node[i].node)
 			node[i].Pkg.Build()
 		}
+		//fmt.Printf("append pkg:%v", node[i].Pkg)
 		nodeBytes = append(nodeBytes, node[i].Pkg.Bytes()...)
+		//fmt.Printf("nodeBytes:%v\n\n", nodeBytes)
 	}
 
 	return nodeBytes

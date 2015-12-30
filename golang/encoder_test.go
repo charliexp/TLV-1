@@ -17,10 +17,14 @@ package golang
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
+	"sync/atomic"
 	"testing"
 )
 
 func TestTLVObject(t *testing.T) {
+
+	t.SkipNow()
 
 	tlvBuilder := TLVObject{}
 
@@ -31,6 +35,10 @@ func TestTLVObject(t *testing.T) {
 	var int16Value int16 = -300
 	var int32Value int32 = 655354
 	var int64Value int64 = 65535400
+	var intVaule8 int64 = math.MaxInt8
+	var intVaule16 int64 = math.MaxInt16
+	var intVaule32 int64 = math.MaxInt32
+	var intVaule64 int64 = math.MaxInt64
 	stringValue := "zhoujunhua"
 
 	tlvObject.PutInt8(0, int8Value)
@@ -38,6 +46,10 @@ func TestTLVObject(t *testing.T) {
 	tlvObject.PutInt32(2, int32Value)
 	tlvObject.PutInt64(3, int64Value)
 	tlvObject.PutString(4, stringValue)
+	tlvObject.PutVarInt(5, intVaule8)
+	tlvObject.PutVarInt(6, intVaule16)
+	tlvObject.PutVarInt(7, intVaule32)
+	tlvObject.PutVarInt(8, intVaule64)
 
 	tlvParser := TLVObject{}
 	tlvParser.FromBytes(tlvBuilder.Bytes())
@@ -79,10 +91,42 @@ func TestTLVObject(t *testing.T) {
 			t.Errorf("没有找到stringField\n")
 		}
 
+		intVaule8Parse, ok := findObject.GetVarInt(5)
+		if ok {
+			fmt.Printf("intVaule8Parse = %v\n", intVaule8Parse)
+		} else {
+			t.Errorf("intVaule8Parse\n")
+		}
+
+		intVaule16Parse, ok := findObject.GetVarInt(6)
+		if ok {
+			fmt.Printf("intVaule16Parse = %v\n", intVaule16Parse)
+		} else {
+			t.Errorf("intVaule16Parse\n")
+		}
+
+		intVaule32Parse, ok := findObject.GetVarInt(7)
+		if ok {
+			fmt.Printf("intVaule32Parse = %v\n", intVaule32Parse)
+		} else {
+			t.Errorf("intVaule32Parse\n")
+		}
+
+		intVaule64Parse, ok := findObject.GetVarInt(8)
+		if ok {
+			fmt.Printf("intVaule64Parse = %v\n", intVaule64Parse)
+		} else {
+			t.Errorf("intVaule64Parse\n")
+		}
+
 		if int8ValueParse != int8Value ||
 			int16ValueParse != int16Value ||
 			int32ValueParse != int32Value ||
 			int64ValueParse != int64Value ||
+			intVaule8Parse != math.MaxInt8 ||
+			intVaule16Parse != math.MaxInt16 ||
+			intVaule32Parse != math.MaxInt32 ||
+			intVaule64Parse != math.MaxInt64 ||
 			stringParse != stringValue {
 			t.Errorf("测试失败\n")
 		}
@@ -93,7 +137,24 @@ func TestTLVObject(t *testing.T) {
 
 }
 
+func TestNullTLVPkg(t *testing.T) {
+	t.SkipNow()
+
+	tlvBuilder := TLVObject{}
+
+	tlvObject := TLVObject{}
+	tlvBuilder.Put(4, &tlvObject)
+
+	bytes := tlvBuilder.Bytes()
+
+	decoder := &Decoder{}
+	obj, _ := decoder.Parse(bytes, len(bytes))
+	fmt.Printf("obj: %v\n", obj)
+}
+
 func TestTLVPkg(t *testing.T) {
+
+	t.SkipNow()
 
 	var int8Value int8 = 10
 	int8ValueBytes := make([]byte, 1)
@@ -246,6 +307,8 @@ func TestTLVPkg(t *testing.T) {
 测试长度编码和解码是否正确
 */
 func TestBuildLength(t *testing.T) {
+	t.SkipNow()
+
 	rawLength := []int{0x00, 0x7f, 0x81, 0x7fff, 0x8001}
 
 	for i := 0; i < len(rawLength); i++ {
@@ -263,6 +326,8 @@ func TestBuildLength(t *testing.T) {
 测试类型编码和解码是否正确
 */
 func TestBuildTag(t *testing.T) {
+	t.SkipNow()
+
 	rawFrameType := []byte{FarmeTypePrimitive, FarmeTypePrivate}
 	rawDataType := []byte{DataTypePrimitive, DataTypeStruct}
 	rawTagValue := []int{0x1f, 0x81, 0x3FFF, 0x3FFFF}
@@ -281,4 +346,13 @@ func TestBuildTag(t *testing.T) {
 		}
 	}
 
+}
+
+func TestAtomic(t *testing.T) {
+	t.SkipNow()
+
+	var connId int64
+	atomic.AddInt64(&connId, 1)
+	connId0 := atomic.LoadInt64(&connId)
+	fmt.Println(connId0)
 }

@@ -16,29 +16,39 @@
 package golang
 
 import (
-//"fmt"
+	"errors"
+	"fmt"
 )
 
 // TLV网络数据解码器
 type Decoder struct {
-	buf    []byte //缓冲区
-	bufLen int    //缓冲区数据长度
+	buf    []byte // 缓冲区
+	bufLen int    // 缓冲区数据长度
 
-	beforeCursor int //之前解析到数据位置
-	curCursor    int //当前解析到数据位置
+	beforeCursor int // 之前解析到数据位置
+	curCursor    int // 当前解析到数据位置
 
 	isFindTag bool
 	isFindLen bool
 
-	valueLen int //数据段的长度
+	valueLen int // 数据段的长度
 }
 
 /**
 从网络流数据中解析出TLV结构数据
 */
 func (this *Decoder) Parse(request []byte, requestLen int) (tlvArray []TLVObject, err error) {
+
+	defer func() {
+		if errPanic := recover(); errPanic != nil {
+			err = errors.New(fmt.Sprintf("tlv parse panic: %v", errPanic))
+		}
+	}()
+
 	this.buf = append(this.buf, request[:requestLen]...)
 	this.bufLen += requestLen
+
+	//fmt.Printf("bufSize = %d\n", len(this.buf))
 
 	for ; this.curCursor < this.bufLen; this.curCursor++ {
 
@@ -50,7 +60,7 @@ func (this *Decoder) Parse(request []byte, requestLen int) (tlvArray []TLVObject
 				this.isFindTag = true
 				this.beforeCursor = this.curCursor + 1
 
-				//fmt.Printf("findTag-->curCursor = %v\n", this.curCursor)
+				//fmt.Printf("findTag curCursor = %v, tag = %v\n", this.curCursor, this.buf[this.curCursor]&0x1f)
 			}
 			continue
 		}
@@ -63,25 +73,35 @@ func (this *Decoder) Parse(request []byte, requestLen int) (tlvArray []TLVObject
 
 				this.beforeCursor = this.curCursor
 
-				//fmt.Printf("findLen-->curCursor = %v, valueLen = %v\n", this.curCursor, this.valueLen)
+				//fmt.Printf("findLen curCursor = %v, valueLen = %v\n", this.curCursor, this.valueLen)
+				if this.valueLen == 0 {
+					tlvArray = this.addParsedObj(tlvArray)
+				}
 			}
 			continue
 		}
 
+		//fmt.Printf("curCursor = %v, beforeCursor = %v, valueLen = %v\n", this.curCursor, this.beforeCursor, this.valueLen)
+
 		if this.curCursor-this.beforeCursor == this.valueLen {
 			//已经完整的获取到一个tlv包数据，开始解析整个tlv包
-			//fmt.Printf("tlvBytes1 = %v\n", this.buf[:this.curCursor+1])
-
-			tlvObject := TLVObject{}
-			tlvObject.FromBytes(this.buf[:this.curCursor+1])
-			//fmt.Printf("%v\n", tlvObject)
-
-			tlvArray = append(tlvArray, tlvObject)
-			this.reset()
+			//fmt.Printf("find a TLV object: curCursor = %d, beforeCursor = %d\n", this.curCursor, this.beforeCursor)
+			tlvArray = this.addParsedObj(tlvArray)
 		}
 	}
 
 	return tlvArray, nil
+}
+
+// 添加解析完成了的对象
+func (this *Decoder) addParsedObj(tlvArray []TLVObject) (retArray []TLVObject) {
+	tlvObject := TLVObject{}
+	tlvObject.FromBytes(this.buf[:this.curCursor+1])
+
+	retArray = append(tlvArray, tlvObject)
+	this.reset()
+
+	return retArray
 }
 
 /**
@@ -134,19 +154,19 @@ func parseTag(tagBytes []byte) (frameType byte, dataType byte, tagValue int) {
 	frameType = tagBytes[0] & FarmeTypePrivate
 	dataType = tagBytes[0] & DataTypeStruct
 
-	tempByte := tagBytes[0] //临时保存，计算完成tagValue恢复
-
-	tagBytes[0] = tagBytes[0] & 0x1f
 	tagValue = 0
-	power := 1
 	byteCount := len(tagBytes)
-	for i := 0; i < byteCount; i++ {
+	if byteCount == 1 {
+		tagValue = int(tagBytes[0] & 0x1f)
+		return frameType, dataType, tagValue
+	}
+
+	power := 1
+	for i := 1; i < byteCount; i++ {
 		digit := tagBytes[i]
 		tagValue += int(digit&0x7f) * power
 		power *= 128
 	}
-
-	tagBytes[0] = tempByte
 
 	return frameType, dataType, tagValue
 }
